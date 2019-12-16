@@ -10,7 +10,8 @@ categories: []
 ```{R}
 library(reticulate)
 np <- import("numpy")
-reticulate::py_config()
+#reticulate::py_config()
+#use_python("Jarrett/AppData/Roaming/Microsoft/Windows/StartMenu/Programs/Python3.8")
 ```
 
 # Python
