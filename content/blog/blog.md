@@ -9,6 +9,4 @@ title: Blog
 ---
 ## Blog
 
-Here are the projects I have been working on:
-
--[Blog 12-15-2019](/2019-12-15-classtime/)
+-[Blog 12-15-2019](/2019-12-15-classtime.html/)
