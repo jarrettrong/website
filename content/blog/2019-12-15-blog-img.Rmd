@@ -1,0 +1,10 @@
+---
+title: blog
+author: ''
+date: '2019-12-15'
+slug: blog
+categories: []
+tags: []
+description: ''
+---
+![](/blog/2019-12-15-blog-img_files/blog.png)
