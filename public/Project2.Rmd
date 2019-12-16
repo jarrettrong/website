@@ -1,0 +1,299 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Jarrett Rong jr62422"
+date: ''
+output:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+# Modeling
+## Guidelines and Rubric
+
+- **0. (5 pts)** Introduce your dataset and each of your variables (or just your main variables if you have lots) in a paragraph.
+
+```{R}
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+Education_Unemployment <- read_excel("C:/Users/Jarrett/Desktop/16th Semester 1/Comp Bio/Education_Unemployment.xls.xlsx")
+Ethnicity_Race <- read_excel("C:/Users/Jarrett/Desktop/16th Semester 1/Comp Bio/Ethnicity_Race.xls.xlsx")
+fulldata<- Education_Unemployment%>%full_join(Ethnicity_Race, by = "County")
+
+#Making data numeric
+fulldata$HighSchoolGraduateOrHigher <- as.numeric(fulldata$HighSchoolGraduateOrHigher)
+fulldata$BachelorDegreeOrHigher <- as.numeric(fulldata$BachelorDegreeOrHigher)
+fulldata$UnemploymentRate <- as.numeric(fulldata$UnemploymentRate)
+fulldata$Hispanic <- as.numeric(fulldata$Hispanic)
+fulldata$WhiteAlone <- as.numeric(fulldata$WhiteAlone)
+fulldata$AfricanAmericanAlone <- as.numeric(fulldata$AfricanAmericanAlone)
+fulldata$IndianNativeAlone <- as.numeric(fulldata$IndianNativeAlone)
+fulldata$AsianAlone <- as.numeric(fulldata$AsianAlone)
+fulldata$`NativeHawaiianand OtherPacificIslanderAlone` <- as.numeric(fulldata$`NativeHawaiianand OtherPacificIslanderAlone`)
+fulldata$MultiRacial <- as.numeric(fulldata$MultiRacial)
+
+#Creating categorical data
+quantile(as.numeric(fulldata$UnemploymentRate), probs = c(0,1/3,2/3,1))
+quantile(as.numeric(fulldata$BachelorDegreeOrHigher), probs = c(0,1/3,2/3,1))
+alldata <- fulldata %>% mutate(unemployrange = cut(UnemploymentRate, breaks = c(-Inf,3.7,4.7,Inf), labels = c("Low", "Medium", "High"))) %>% mutate(bachelorrange=cut(BachelorDegreeOrHigher, breaks = c(-Inf, 14.7,18.8,Inf),labels=c("Low","Medium","High")))
+```
+
+*Data description: The two datasets that I am using are Texas Ethnicity & Race and Texas Education & Unemployment, both based on counties in Texas. I extracted the data from Texas Association of Counties. The Ethnicity and Race dataset shows the percentages of each race and ethnicity, including Hispanic, White, African American, Indian Native, Asian, Native Hawaiian and other Pacific Islander, and Multi Racial that make up each county. The Education & Unemployment dataset shows the percent of highschool graduates or higher, percent of the population with a bachelor degree or higher, and the unemployment rate in each Texas county. This data is interesting to me because I expect some sort of correlation between race and level of education/unemployment rate because that's what I've been taught throughout my studies and through personal experience. However, I want to go into this project without any biases and let the data tell the story.*
+
+- **1. (15 pts)** Perform a MANOVA testing whether any of your numeric variables (or a subset of them, if including them all doesn't make sense) show a mean difference across levels of one of your categorical variables (3). If they do, perform univariate ANOVAs to find response(s) showing a mean difference across groups (3), and perform post-hoc t tests to find which groups differ (3). Discuss the number of tests you have performed, calculate the probability of at least one type I error (if unadjusted), and adjust the significance level accordingly (bonferroni correction) before discussing significant differences (3). Briefly discuss assumptions and whether or not they are likely to have been met (2).
+
+```{R}
+man<-manova(cbind(Hispanic,WhiteAlone,AfricanAmericanAlone,IndianNativeAlone,AsianAlone,`NativeHawaiianand OtherPacificIslanderAlone`,MultiRacial)~unemployrange,data=alldata)
+summary(man)
+
+#ANOVA
+summary.aov(man)
+
+#Bonferroni, 7 numeric, 1 cat - 3 response
+### number of tests = 7+1+(3*3) = 17
+0.05/17
+### 0.00294
+
+#Bonferroni Adjustment: At least 1 type 1 error
+1-(0.95)^14
+###0.512325
+
+
+#Pairwise t test
+pairwise.t.test(alldata$WhiteAlone, alldata$unemployrange, p.adj = "none")
+pairwise.t.test(alldata$AfricanAmericanAlone, alldata$unemployrange, p.adj = "none")
+pairwise.t.test(alldata$MultiRacial, alldata$unemployrange, p.adj = "none")
+
+```
+
+*I performed a MANOVA using 7 numeric variables, and with a p-value of 8.739e-10, there is a significant mean difference across unemployment in levels of "low", "medium", and "high." In performing the ANOVA with the function summary.aov(), there were 3 significant numeric response variables, WhiteAlone, AfricanAmericanAlone, and MultiRacial. With 1 MANOVA, 7 ANOVA, and 3x3 (t-tests), there were a total of 17 tests performed. The probability for a type 1 error is 0.512325, and the Bonferonni correction is 0.00294. After running the Bonferroni post-hoc analysis and getting a value of 0.00357, WhiteAlone and AfricanAmericanAlone are still significant, but the MultiRacial is no longer significant. This shows that WhiteAlone and AfricanAmericanAlone differed across counties with varying levels of unemployment rate. In running a MANOVA, the assumptions are that there are random samples with independent obserations, multivariate normality of DVs, homogeneity of within-group covariance matrices, linear relationships among DVs, no extreme univariate or multivariate outliers, and no multicollinearity. However, in these two datasets of Texas counties, random sampling was not achieved as it takes into account the counties of Texas. Also, outliers exist as there are some counties that contain disproportionate ratios of certain ethnicities, and smaller counties give rise to a higher chance of extreme variables.*
+
+- **2. (10 pts)** Perform some kind of randomization test on your data (that makes sense). This can be anything you want! State null and alternative hypotheses, perform the test, and interpret the results (7). Create a plot visualizing the null distribution and the test statistic (3).
+
+```{R}
+obs_F<-5.0221
+Fs<-replicate(5000,{
+ new<-alldata%>%mutate(Hispanic=sample(Hispanic))
+ SSW<- new%>%group_by(unemployrange)%>%summarize(SSW=sum((Hispanic-mean(Hispanic))^2))%>%summarize(sum(SSW))%>%pull
+ SSB<- new%>%mutate(mean=mean(Hispanic))%>%group_by(unemployrange)%>%mutate(groupmean=mean(Hispanic))%>%
+ summarize(SSB=sum((mean-groupmean)^2))%>%summarize(sum(SSB))%>%pull
+ (SSB/2)/(SSW/57)
+})
+hist(Fs, prob=T); abline(v = obs_F, col="red",add=T)
+mean(Fs>obs_F)
+
+```
+
+*The null hypothesis is that for each of the response variables, the means of the levels of unemployment rate are equal. The alternative hypothesis is that for at least one of the response variables, at least one levels of the unemployment rates differ. In running the randomization test, the mean(Fs>obs_F) is 0, meaning we reject the null hypothesis. This means that among Hispanic ethnicity there are diferences between unemplyment levels.*
+
+- **3. (35 pts)** Build a linear regression model predicting one of your response variables from at least 2 other variables, including their interaction. Mean-center any numeric variables involved in the interaction.
+
+    - Interpret the coefficient estimates (do not discuss significance) (10)
+    - Plot the regression using `ggplot()`. If your interaction is numeric by numeric, refer to code near the end of WS15 to make the plot. If you have 3 or more predictors, just chose two to plot for convenience. (7)
+    - Check assumptions of linearity, normality, and homoskedasticity either graphically or using a hypothesis test (3)
+    - Regardless, recompute regression results with robust standard errors via `coeftest(..., vcov=vcovHC(...))`. Discuss significance of results, including any changes from before/after robust SEs if applicable. (7)
+    - What proportion of the variation in the outcome does your model explain? (3)
+    - Finally, rerun the regression but without interactions (just main effects); compare this with the interaction model and the null model using a likelihood ratio test (4)
+
+```{R}
+#mean centering variables
+
+WhiteAlone_c<-alldata$WhiteAlone-mean(alldata$WhiteAlone)
+AfricanAmericanAlone_c<-alldata$AfricanAmericanAlone-mean(alldata$AfricanAmericanAlone)
+UnemploymentRate<-alldata$UnemploymentRate
+AfricanAmericanAlone<-alldata$AfricanAmericanAlone
+WhiteAlone<-alldata$WhiteAlone
+CenteredData<-data.frame(UnemploymentRate,WhiteAlone_c,AfricanAmericanAlone_c,WhiteAlone)
+fit<-lm(UnemploymentRate~WhiteAlone_c*AfricanAmericanAlone_c, data=CenteredData)
+summary(fit)
+#Plot of Linear Regression
+new1<-CenteredData
+new1$WhiteAlone_c<-mean(CenteredData$WhiteAlone_c)
+new1$mean<-predict(fit,new1)
+new1$WhiteAlone_c<-mean(CenteredData$WhiteAlone_c)+sd(CenteredData$WhiteAlone_c)
+new1$plus.sd<-predict(fit,new1)
+new1$WhiteAlone_c<-mean(CenteredData$WhiteAlone_c)-sd(CenteredData$WhiteAlone_c)
+new1$minus.sd<-predict(fit,new1)
+
+#new1<-new1%>%mutate_if(is.numeric,round,digits=3)
+
+mycols<-c("#619CFF","#F8766D","#00BA38")
+names(mycols)<-c("-1 sd","mean","+1 sd")
+mycols=as.factor(mycols)
+
+library(ggplot2)
+ggplot(alldata,aes(AfricanAmericanAlone_c,UnemploymentRate),group=mycols)+geom_point()+geom_line(data=new1,aes(y=mean,color="mean"))+geom_line(data=new1,aes(y=plus.sd,color="+1 sd"))+geom_line(data=new1,aes(y=minus.sd,color="-1 sd"))+scale_color_manual(values=mycols)+labs(color="WhiteAlone (%) (cont)")+theme(legend.position=c(.9,.2))
+
+library(sandwich)
+library(lmtest)
+resids<-fit$residuals
+#homoskedasticity
+bptest(fit)
+#linearity
+shapiro.test(resids)
+#normality
+ks.test(resids,"pnorm",mean=0,sd(resids))
+#corrected SE
+coeftest(fit,vcov=vcovHC(fit))[,1:2]
+fit1<-lm(UnemploymentRate~WhiteAlone_c+AfricanAmericanAlone_c,data=CenteredData)
+summary(fit1)
+```
+
+*In regards to the coefficients, on average for every one percent increase in White Alone, there is a 0.158501 increace in unemployment. Also, on average, for every one percent increase in AftericanAmericanAlone, there is a 0.190844 increase in unemployment rates. The Best-fitting line is Unemployment Rate = 4.355072 + 0.158501 (% WhiteAlone) 0.190844 (% AfricanAmericanAlone). Both WhiteAlone (t-value=3.727, p<0.05) and AfricanAmericanAlone (t-value=3.856, p<0.05) explain a significant amount of variation in unemployment rate (DF=250).  With an R-Squared value of 0.07629, the model explains 0.07629 of the variation in the unemployment rate. With the p-value for the BP test <0.05, the data is homoskedastic. In the Shapiro-Wilk test for normality, the p-value is <0.001, meaning the data is not linear. The Kolmogorov-Smirnov test has a p-value <0.001, meaning the data is not normal. After applying robust SEs, the two variables, WhiteAlone, and AfricanAmericanAlone are both still significant in explaining variation in unemployment rate.*
+
+- **4. (5 pts)** Rerun same regression model (with interaction), but this time compute bootstrapped standard errors. Discuss any changes you observe in SEs and p-values using these SEs compared to the original SEs adn the robust SEs).
+
+```{R}
+samp_distn<-replicate(5000, {
+ boot_data<-alldata[sample(nrow(alldata),replace=TRUE),]
+ fit1<-lm(UnemploymentRate~WhiteAlone_c*AfricanAmericanAlone_c,data=boot_data)
+ coef(fit)
+})
+samp_distn%>%t%>%as.data.frame%>%summarize_all(sd)
+```
+
+*These SEs are all greater than the original SEs, but they are smaller than the robust SEs except for WhiteAlone. With a smaller SE than the robust SE, they ave a larger t-value and a smaller p-value, and vice ersa when compared to the original SEs.1*
+
+- **5. (40 pts)** Perform a logistic regression predicting a binary categorical variable (if you don't have one, make/get one) from at least two explanatory variables (interaction not necessary). 
+
+    - Interpret coefficient estimates in context (10)
+    - Report a confusion matrix for your logistic regression (2)
+    - Compute and discuss the Accuracy, Sensitivity (TPR), Specificity (TNR), and Recall (PPV) of your model (5)
+    - Using ggplot, plot density of log-odds (logit) by your binary outcome variable (3)
+    - Generate an ROC curve (plot) and calculate AUC (either manually or with a package); interpret (10)
+    - Perform 10-fold (or repeated random sub-sampling) CV and report average out-of-sample Accuracy, Sensitivity, and Recall (10)
+
+```{R}
+library(lmtest)
+class_diag<-function(probs,truth){
+ tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+ acc=sum(diag(tab))/sum(tab)
+ sens=tab[2,2]/colSums(tab)[2]
+ spec=tab[1,1]/colSums(tab)[1]
+ ppv=tab[2,2]/rowSums(tab)[2]
+ if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+ #CALCULATE EXACT AUC
+ ord<-order(probs, decreasing=TRUE)
+ probs <- probs[ord]; truth <- truth[ord]
+ TPR=cumsum(truth)/max(1,sum(truth))
+ FPR=cumsum(!truth)/max(1,sum(!truth))
+ dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+ TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+ n <- length(TPR)
+ auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+ data.frame(acc,sens,spec,ppv,auc)
+} 
+high_unemploy<-ifelse(alldata$UnemploymentRate>median(alldata$UnemploymentRate),1,0)
+
+binaryData<-data.frame(high_unemploy,WhiteAlone, AfricanAmericanAlone)
+fit<-glm(high_unemploy~WhiteAlone+AfricanAmericanAlone,data=binaryData,family=binomial(link="logit"))
+coeftest(fit)
+exp(coef(fit))
+probs<-predict(fit,type="response")
+class_diag(probs,binaryData$high_unemploy)
+#Confusion Matrix
+pred<-ifelse(probs>.5,1,0) 
+table(predictions=pred,truth=binaryData$high_unemploy)%>%addmargins
+
+#plot density of log-odds (logit) by binary outcome variable
+data<-binaryData
+data$high_unemploy<-as.factor(data$high_unemploy)
+data$logit<-predict(fit,type="link")
+
+data%>%ggplot()+geom_density(aes(logit,color=high_unemploy,fill=high_unemploy), alpha=.4)+
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab("predictor (logit)")
+
+#ROC Curve
+data$prob<-predict(fit,type="response") 
+sens<-function(p,data=data, y=high_unemploy) mean(data[data$high_unemploy==1,]$prob>p)
+spec<-function(p,data=data, y=high_unemploy) mean(data[data$high_unemploy==0,]$prob<p)
+sensitivity<-sapply(seq(0,1,.01),sens,data)
+specificity<-sapply(seq(0,1,.01),spec,data)
+ROC1<-data.frame(sensitivity,specificity,cutoff=seq(0,1,.01))
+ROC1$TPR<-sensitivity
+ROC1$FPR<-1-specificity
+ROC1%>%ggplot(aes(FPR,TPR))+geom_path(size=1.5)+geom_segment(aes(x=0,y=0,xend=1,yend=1),lty=2)+
+ scale_x_continuous(limits = c(0,1))
+
+#AUC
+widths<-diff(ROC1$FPR) #horizontal distances
+heights<-vector() #sum of top and bottom vertical line in loop
+for(i in 1:100) heights[i]<-ROC1$TPR[i]+ROC1$TPR[i+1]
+AUC<-sum(heights*widths/2) #sum up areas of trapezoids
+AUC%>%round(3)
+
+#10-fold
+set.seed(1234)
+k=10
+data1<-binaryData[sample(nrow(binaryData)),] #put dataset in random order
+folds<-cut(seq(1:nrow(binaryData)),breaks=k,labels=F) #create folds
+diags<-NULL
+for(i in 1:k){ # FOR EACH OF 10 FOLDS
+  train<-data1[folds!=i,] #CREATE TRAINING SET
+  test<-data1[folds==i,] #CREATE TESTING SET
+  truth<-test$high_unemploy
+  
+  fit<- glm(high_unemploy~(.),data=binaryData,family="binomial")
+  prob<- predict(fit,newdata = test,type="response")
+  
+  diags<-rbind(diags,class_diag(prob,truth)) 
+}
+apply(diags,2,mean)
+```
+
+*For every additional percent increase in WhiteAlone there is an increase in the odds of a county being in the high category of unemployment rate by a factor of e^1.224861=3.403693. For every additional percent increase in AfricanAmericanAlone, there in an increase in the odds of a county being in the high category of unemployment rate by e^1.421182=4.142013. For the model, the Accureacy is 0.6614173, the sensitivity is 0.475, the specificity is 0.8283582, and the PPV is 0.7125. The sensitivity is the lowest, meaning the true positive rate is relatively low, with fewer than half of the proportion of high unemployment correctly classified. The specificity is highest out of the group, with more than 80% of the low unemployment correctly classified. Overall, there is a 66% accuracy, which is the proportion of correctly classified cases. There was a 71.25% precision rate, which is the ethnicity classified as low unemployment who actually are. The AUC, or the integral of the ROC curve is 0.7082711, which means the independent variables are not a great predictor of the binary variable. After performing a 10-fold CV, the out-of-sample accuracy was 0.6624615, sensitivity was 0.4758367, and recall was 0.7333528.*
+
+- **6. (10 pts)** Choose one variable you want to predict (can be one you used from before; either binary or continuous) and run a LASSO regression inputting all the rest of your variables as predictors. Choose lambda to give the simplest model whose accuracy is near that of the best (i.e., `lambda.1se`). Discuss which variables are retained. Perform 10-fold CV using this model: if response in binary, compare model's out-of-sample accuracy to that of your logistic regression in part 5; if response is numeric, compare the residual standard error (at the bottom of the summary output, aka RMSE): lower is better fit!
+
+```{R}
+library(glmnet)
+alldata$high_unemploy<-ifelse(alldata$UnemploymentRate>median(alldata$UnemploymentRate),1,0)
+y<-as.matrix(alldata$high_unemploy)
+x<-alldata%>%dplyr::select(-c(UnemploymentRate,high_unemploy,County,UnemploymentRate,unemployrange,bachelorrange))%>%mutate_all(scale)%>%as.matrix
+cv<-cv.glmnet(x,y)
+lasso1<-glmnet(x,y,lambda=cv$lambda.1se)
+coef(lasso1)
+set.seed(1234)
+k=10
+data1<-alldata[sample(nrow(alldata)),]
+folds<-cut(seq(1:nrow(alldata)),breaks=k,labels=F)
+diags<-NULL
+for(i in 1:k){
+ train<-data1[folds!=i,]
+ test<-data1[folds==i,]
+ truth<-test$high_unemploy
+ fit<-glm(high_unemploy~HighSchoolGraduateOrHigher+BachelorDegreeOrHigher+AfricanAmericanAlone,data=train,family="binomial")
+ probs<-predict(fit,newdata = test,type="response")
+ diags<-rbind(diags,class_diag(probs,truth))
+}
+apply(diags,2,mean)
+
+```
+*With a binary response, this model's out-of-sample accuracy is 0.6615. Meanwhile, the out-of-sample accuracy of the logistic regression was 0.6614. These two accuracies are extremely similar to each other with this model's out-of-sample accuracy is only marginally higher with only a 0.0001 difference between the two.*
+...

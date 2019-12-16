@@ -1,0 +1,293 @@
+---
+title: 'Project 1: Exploratory Data Analysis'
+author: "Jarrett Rong"
+date: "9/16/2019"
+---
+
+
+
+<div id="data-wrangling-and-data-exploration" class="section level2">
+<h2>Data Wrangling and Data Exploration</h2>
+<div id="instructions" class="section level3">
+<h3>Instructions</h3>
+<p>A knitted R Markdown document (as a PDF) and the raw R Markdown file (as .Rmd) should both be submitted to Canvas by 11:59pm on 10/13/2019. These two documents will be graded jointly, so they must be consistent (i.e., don’t change the R Markdown file without also updating the knitted document). Knit an html copy too, for later!</p>
+<p>I envision your written text forming something of a narrative structure around your code/output. All results presented must have corresponding code. Any answers/results/plots etc. given without the corresponding R code that generated the result will not be graded. Furthermore, all code contained in your final project document should work properly. Please do not include any extraneous code or code which produces error messages. (Code which produces warnings is acceptable, as long as you understand what the warnings mean).</p>
+<pre class="r"><code>library(readxl)
+library(ggplot2)
+library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(tidyr)
+library(tidyverse)</code></pre>
+<pre><code>## -- Attaching packages ------ tidyverse 1.2.1 --</code></pre>
+<pre><code>## v tibble  2.1.3     v purrr   0.3.2
+## v readr   1.3.1     v stringr 1.4.0
+## v tibble  2.1.3     v forcats 0.4.0</code></pre>
+<pre><code>## -- Conflicts --------- tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>Education_Unemployment&lt;-read_excel(&quot;C:/Users/Jarrett/Desktop/Education_Unemployment.xls.xlsx&quot;)
+Ethnicity_Race &lt;- read_excel(&quot;C:/Users/Jarrett/Desktop/Ethnicity_Race.xls.xlsx&quot;)
+head(Education_Unemployment)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##   County    HighSchoolGraduateOrHig~ BachelorDegreeOrHigh~ UnemploymentRate
+##   &lt;chr&gt;     &lt;chr&gt;                    &lt;chr&gt;                 &lt;chr&gt;           
+## 1 Anderson  80.2                     11.8                  3.6             
+## 2 Andrews   73.8                     10.6                  3.1             
+## 3 Angelina  79.9                     15.7                  5.1             
+## 4 Aransas   83.2                     20.2                  6.8             
+## 5 Archer    90.1                     21.8                  3.4             
+## 6 Armstrong 89.8                     23.1                  2.5</code></pre>
+<pre class="r"><code>head(Ethnicity_Race)</code></pre>
+<pre><code>## # A tibble: 6 x 8
+##   County Hispanic WhiteAlone AfricanAmerican~ IndianNativeAlo~ AsianAlone
+##   &lt;chr&gt;  &lt;chr&gt;    &lt;chr&gt;      &lt;chr&gt;            &lt;chr&gt;            &lt;chr&gt;     
+## 1 Ander~ 17.82    75.11      21.49            0.68             0.9       
+## 2 Andre~ 56.19    94.22      1.94             1.47             0.75      
+## 3 Angel~ 22.18    81.27      15.44            0.75             1.17      
+## 4 Arans~ 27.66    93.05      1.79             1.24             1.93      
+## 5 Archer 8.68     95.58      1.03             1.42             0.43      
+## 6 Armst~ 7.5      96.43      1.12             1.49             0.11      
+## # ... with 2 more variables: `NativeHawaiianand
+## #   OtherPacificIslanderAlone` &lt;chr&gt;, MultiRacial &lt;chr&gt;</code></pre>
+</div>
+<div id="introduction" class="section level3">
+<h3>Introduction</h3>
+<p>Data description: The two datasets that I am using are Texas Ethnicity &amp; Race and Texas Education &amp; Unemployment, both based on counties in Texas. I extracted the data from Texas Association of Counties. The Ethnicity and Race dataset shows the percentages of each race and ethnicity, including Hispanic, White, African American, Indian Native, Asian, Native Hawaiian and other Pacific Islander, and Multi Racial that make up each county. The Education &amp; Unemployment dataset shows the percent of highschool graduates or higher, percent of the population with a bachelor degree or higher, and the unemployment rate in each Texas county.</p>
+<p>This data is interesting to me because I expect some sort of correlation between race and level of education/unemployment rate because that’s what I’ve been taught throughout my studies and through personal experience. However, I want to go into this project without any biases and let the data tell the story.</p>
+</div>
+<div id="guidelines" class="section level3">
+<h3>Guidelines</h3>
+<ol style="list-style-type: decimal">
+<li>If the datasets are not tidy, you will need to reshape them so that every observation has its own row and every variable its own column. If the datasets are both already tidy, you will make them untidy with spread() and then tidy them again with gather() to demonstrate your use of the functions.</li>
+</ol>
+<pre class="r"><code>education_employment_untidy &lt;- Education_Unemployment %&gt;% pivot_longer(c(&quot;HighSchoolGraduateOrHigher&quot;, &quot;BachelorDegreeOrHigher&quot;, &quot;UnemploymentRate&quot;), names_to=&quot;name&quot;, values_to=&quot;value&quot;)
+education_employment_tidy &lt;- education_employment_untidy %&gt;% pivot_wider(names_from = &quot;name&quot;, values_from = &quot;value&quot;)
+ethnicity_race_untidy &lt;- Ethnicity_Race %&gt;% pivot_longer(c(&quot;Hispanic&quot;, &quot;WhiteAlone&quot;), names_to = &quot;name&quot;, values_to = &quot;value&quot;)
+ethnicity_race_tidy &lt;- ethnicity_race_untidy %&gt;% pivot_wider(names_from = &quot;name&quot;, values_from = &quot;value&quot;)</code></pre>
+<p>Since all the datasets were already tidy, I began by untidying each dataset. Each dataset contained values in percent. Through the process of untidying, I used the function pivotlonger() to essentially swap the columns and rows.</p>
+<p>In the two datasets, all the data in the columns were presented in percentages, so I used pivotlonger() to untidy the data and created a new “name” column for for the original column titles and a new “value” column for the original percentages. To tidy the two datasets again, I used pivotwider() to revert the data to its original form.</p>
+<ol start="2" style="list-style-type: decimal">
+<li>Join your 2+ separate data sources into a single dataset</li>
+</ol>
+<pre class="r"><code>#joining datasets
+fulldata&lt;- Education_Unemployment%&gt;%full_join(Ethnicity_Race, by = &quot;County&quot;)
+#making data numeric
+fulldata$HighSchoolGraduateOrHigher &lt;- as.numeric(fulldata$HighSchoolGraduateOrHigher)
+fulldata$BachelorDegreeOrHigher &lt;- as.numeric(fulldata$BachelorDegreeOrHigher)
+fulldata$UnemploymentRate &lt;- as.numeric(fulldata$UnemploymentRate)
+fulldata$Hispanic &lt;- as.numeric(fulldata$Hispanic)
+fulldata$WhiteAlone &lt;- as.numeric(fulldata$WhiteAlone)
+fulldata$AfricanAmericanAlone &lt;- as.numeric(fulldata$AfricanAmericanAlone)
+fulldata$IndianNativeAlone &lt;- as.numeric(fulldata$IndianNativeAlone)
+fulldata$AsianAlone &lt;- as.numeric(fulldata$AsianAlone)
+fulldata$`NativeHawaiianand OtherPacificIslanderAlone` &lt;- as.numeric(fulldata$`NativeHawaiianand OtherPacificIslanderAlone`)
+fulldata$MultiRacial &lt;- as.numeric(fulldata$MultiRacial)</code></pre>
+<p>In this case, since both of my datasets have “counties” in common, I decided to use the function full_join(). I chose full join because it retains all of the data, but I could have also used right join or left join because neither of the datasets have any matching columns, so no data would have been lost.</p>
+<p>Also, in order to guarantee that all the values in my dataset are registered as numberic, I used the as.numeric() function.</p>
+<ol start="3" style="list-style-type: decimal">
+<li>Create summary statistics</li>
+</ol>
+<pre class="r"><code>#new variable with mutate
+
+fulldata %&gt;% mutate(County_Unemploy_vs_Texas_Unemploy = UnemploymentRate/ mean(UnemploymentRate))%&gt;%select(County, County_Unemploy_vs_Texas_Unemploy) %&gt;% glimpse()</code></pre>
+<pre><code>## Observations: 254
+## Variables: 2
+## $ County                            &lt;chr&gt; &quot;Anderson&quot;, &quot;Andrews&quot;, &quot;Ange...
+## $ County_Unemploy_vs_Texas_Unemploy &lt;dbl&gt; 0.8047171, 0.6929508, 1.1400...</code></pre>
+<pre class="r"><code>#creating categories
+
+quantile(as.numeric(fulldata$UnemploymentRate), probs = c(0,1/3,2/3,1))</code></pre>
+<pre><code>##        0% 33.33333% 66.66667%      100% 
+##       1.9       3.7       4.7      11.7</code></pre>
+<pre class="r"><code>quantile(as.numeric(fulldata$BachelorDegreeOrHigher), probs = c(0,1/3,2/3,1))</code></pre>
+<pre><code>##        0% 33.33333% 66.66667%      100% 
+##       3.0      14.7      18.8      50.2</code></pre>
+<pre class="r"><code>unemploy_cat_data &lt;- fulldata %&gt;% mutate(unemployrange = cut(UnemploymentRate, breaks = c(-Inf,3.7,4.7,Inf), labels = c(&quot;Low&quot;, &quot;Medium&quot;, &quot;High&quot;))) %&gt;% mutate(bachelorrange=cut(BachelorDegreeOrHigher, breaks = c(-Inf, 14.7,18.8,Inf),labels=c(&quot;Low&quot;,&quot;Medium&quot;,&quot;High&quot;)))
+
+#1 Hispanic Alone by unemployment 
+unemploy_cat_data%&gt;%select(c(unemployrange,Hispanic))%&gt;%group_by(unemployrange)%&gt;%summarize(mean_hispanic=mean(Hispanic))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   unemployrange mean_hispanic
+##   &lt;fct&gt;                 &lt;dbl&gt;
+## 1 Low                    31.2
+## 2 Medium                 33.1
+## 3 High                   41.6</code></pre>
+<pre class="r"><code>#2 White Alone by unemployment 
+unemploy_cat_data%&gt;%select(c(unemployrange,WhiteAlone))%&gt;%group_by(unemployrange)%&gt;%summarize(mean_White=mean(WhiteAlone))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   unemployrange mean_White
+##   &lt;fct&gt;              &lt;dbl&gt;
+## 1 Low                 91.2
+## 2 Medium              87.7
+## 3 High                87.2</code></pre>
+<pre class="r"><code>#3 African American Alone by unemployment
+unemploy_cat_data%&gt;%select(c(unemployrange,AfricanAmericanAlone))%&gt;%group_by(unemployrange)%&gt;%summarize(mean_AfricanAmerican=mean(AfricanAmericanAlone))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   unemployrange mean_AfricanAmerican
+##   &lt;fct&gt;                        &lt;dbl&gt;
+## 1 Low                           4.33
+## 2 Medium                        7.97
+## 3 High                          8.90</code></pre>
+<pre class="r"><code>#4 Indian Native Alone by unemployment
+unemploy_cat_data%&gt;%select(c(unemployrange,IndianNativeAlone))%&gt;%group_by(unemployrange)%&gt;%summarize(mean_IndianNative=mean(IndianNativeAlone))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   unemployrange mean_IndianNative
+##   &lt;fct&gt;                     &lt;dbl&gt;
+## 1 Low                        1.26
+## 2 Medium                     1.26
+## 3 High                       1.16</code></pre>
+<pre class="r"><code>#5 Asian Alone by unemployment 
+unemploy_cat_data%&gt;%select(c(unemployrange,AsianAlone))%&gt;%group_by(unemployrange)%&gt;%summarize(mean_Asian=mean(AsianAlone))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   unemployrange mean_Asian
+##   &lt;fct&gt;              &lt;dbl&gt;
+## 1 Low                 1.42
+## 2 Medium              1.27
+## 3 High                1.12</code></pre>
+<pre class="r"><code>#6 MultiRacial by unemployment
+unemploy_cat_data%&gt;%select(c(unemployrange,MultiRacial))%&gt;%group_by(unemployrange)%&gt;%summarize(mean_MultiRacial=mean(MultiRacial))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   unemployrange mean_MultiRacial
+##   &lt;fct&gt;                    &lt;dbl&gt;
+## 1 Low                       1.73
+## 2 Medium                    1.73
+## 3 High                      1.50</code></pre>
+<pre class="r"><code>#7 White Alone by Bachelor Degree or Higher
+unemploy_cat_data%&gt;%select(c(bachelorrange,WhiteAlone))%&gt;%group_by(bachelorrange)%&gt;%summarize(mean_White=mean(WhiteAlone))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   bachelorrange mean_White
+##   &lt;fct&gt;              &lt;dbl&gt;
+## 1 Low                 89.3
+## 2 Medium              88.7
+## 3 High                88.7</code></pre>
+<pre class="r"><code>#8 Hispanic Alone by Bachelor Degree or Higher
+unemploy_cat_data%&gt;%select(c(bachelorrange,Hispanic))%&gt;%group_by(bachelorrange)%&gt;%summarize(mean_Hispanic=mean(Hispanic))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   bachelorrange mean_Hispanic
+##   &lt;fct&gt;                 &lt;dbl&gt;
+## 1 Low                    44.6
+## 2 Medium                 31.5
+## 3 High                   28.4</code></pre>
+<pre class="r"><code>#9 African American Alone by Bachelor Degree or Higher
+unemploy_cat_data%&gt;%select(c(bachelorrange,AfricanAmericanAlone))%&gt;%group_by(bachelorrange)%&gt;%summarize(mean_AfricanAmerican=mean(AfricanAmericanAlone))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   bachelorrange mean_AfricanAmerican
+##   &lt;fct&gt;                        &lt;dbl&gt;
+## 1 Low                           7.04
+## 2 Medium                        7.34
+## 3 High                          6.08</code></pre>
+<pre class="r"><code>#10 Asian Alone by Bachelor Degree or Higher
+unemploy_cat_data%&gt;%select(c(bachelorrange,AsianAlone))%&gt;%group_by(bachelorrange)%&gt;%summarize(mean_Asian=mean(AsianAlone))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   bachelorrange mean_Asian
+##   &lt;fct&gt;              &lt;dbl&gt;
+## 1 Low                0.885
+## 2 Medium             0.864
+## 3 High               2.11</code></pre>
+<pre class="r"><code>#filtering high unemployment
+unemploy_cat_data%&gt;%filter(unemployrange == &quot;High&quot;)%&gt;%group_by(bachelorrange)%&gt;%summarize(mean_WhiteAlone = mean(WhiteAlone))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   bachelorrange mean_WhiteAlone
+##   &lt;fct&gt;                   &lt;dbl&gt;
+## 1 Low                      88.5
+## 2 Medium                   86.2
+## 3 High                     85.1</code></pre>
+<p>I first used mutate to create a variable called County_Unemploy_vs_Texas_Unemploy, which is a function of the unemployment in each county divided by the mean employment of all the counties in Texas. I then created a new dataset calle unemploy_cat_data, which included the variables “unemployrange” and “bachelorrange”, which contain categorical data for unemployment and bachelor degrees respectively. The categorical variables are “Low”, “Medium”, and “High”, which represent the bottom 1/3, middle, and top 1/3 of the population. I then compared ethnicities to the categorical unemployment. The Hispanic population showed a trend in where counties with a higher percent population of hispanics also had a higher unemployment rate. The white population showed a trend where a higher percent population of white individuals tended to have lower unemployment. The African American population showed a trend where a higher percent population of African Americans correlated with higher unemployment. The Indian Native population showed a trend where a higher percent population of Indian Natives correlated with high unemployment. The Asian population showed a trend in where a higher percent population of Asians correlated with lower unemployment. The multiracial population showed a trend where a higher percent mixed population correlated with lower unemployment, although this difference was not as apparent as the others. I also compared various ethnicities to whether or not they received a bachelor’s degree. Overall not a strong trend was observed in the white population, with 89.28% white ethnicity alone living in counties with low rates of bachelor degrees and 88.74% living in counties with high rates of bachelor degrees. In the Hispanic population, the difference is more evident in that there is 44.64% with “low” levels of bachelors degrees, and 28.43 with “high” levels of bachelors degrees. In African American populations, there is not a significant gap as 7.03% are in counties with “low” levels of bachelor’s degrees and 6.08% with high levels of bachelor’s degrees. In the Asian population there is not much of a difference between “low” and “medium”. However, 2.11% of Asians are in areas with “high” bachelor’s degrees and only 0.88% are in areas with “low” bachelor’s degrees.</p>
+<p>In the filtering, of those with high unemployment, it was seen that there is a higher percentage of the white population categorized as “low” in receiving a bachelor degree compared to “high.” This makes sense because a high unemployment and low levels of bachelor’s degrees are likely correlated, and in this case, we filtered for only high unemployment.</p>
+<ol start="4" style="list-style-type: decimal">
+<li>Make visualizations</li>
+</ol>
+<pre class="r"><code>ggplot(fulldata,aes(x=WhiteAlone))+geom_point(aes(y=UnemploymentRate, size=(fulldata$BachelorDegreeOrHigher)), shape=21,color=&quot;black&quot;,fill=&quot;purple&quot;)+scale_size_continuous(name=&quot;Bachelor Degree or Higher (%)&quot;)+ggtitle(&quot;Percent of White Population Unemployed in Texas Conties&quot;)+xlab(&quot;County&#39;s Percentage of White Individuals (%)&quot;)+ylab(&quot;County&#39;s Percentage of Population Unemployed (%)&quot;)+scale_x_continuous(breaks = seq(0,100,5), labels = seq(0,100,5))</code></pre>
+<p><img src="/Project1_files/figure-html/Visualization-1.png" width="672" /></p>
+<pre class="r"><code>fulldatalonger&lt;-fulldata%&gt;%pivot_longer(c(&quot;Hispanic&quot;, &quot;WhiteAlone&quot;, &quot;AfricanAmericanAlone&quot;, &quot;IndianNativeAlone&quot;,&quot;AsianAlone&quot;,&quot;NativeHawaiianand OtherPacificIslanderAlone&quot;, &quot;MultiRacial&quot;), names_to = &quot;Ethnicity&quot;, values_to = &quot;Percentage&quot;)
+ggplot(fulldatalonger, aes(x= Ethnicity))+geom_bar(aes(y=Percentage), stat=&quot;summary&quot;,fun.y=&quot;mean&quot;,fill=c(&quot;blue&quot;,&quot;green&quot;,&quot;red&quot;,&quot;yellow&quot;,&quot;purple&quot;,&quot;pink&quot;,&quot;orange&quot;))+theme(axis.text.x = element_text(angle=45,hjust=1,size=10))+ggtitle(&quot;Texas County Race and Ethnicity Summary&quot;)+ylab(&quot;Percent of Population(%)&quot;)+xlab(&quot;Ethnicity&quot;)</code></pre>
+<p><img src="/Project1_files/figure-html/Visualization-2.png" width="672" /></p>
+<p>The first scatterplot titled “Percent of White Population Unemployed in Texas Counties” shows a slight trend where counties with higher percentages of white individuals have a lower percent of unemployed individuals. In addition, the size of the point on the plot relate to to percent of populatino with a bachelor’s degree or higher, with the larger points representing a greater percentage of individuals with a bachelor’s degree in a Texas county. From the scatterplot, there seems to be a trend where counties that have a higher percentage of the population that have a bachelor’s degree or higher have a lower percentage of the population unemployed. This is likely due to the fact that higher educated individuals are more likely to get employed.</p>
+<p>In the bar chart titled “Texas County Race and Ethnicity,” it is evident that white individuals make up the majority of the population in Texas, with a percentage more than double the second highest ethnicity, Hispanics. In comparing the race and ethnicity of Texas to the rest of America, there are some differences as well with white individuals making up oer 80% of the population in Texas, while 73% of white indiviudals make up the population of America. Also, the second most common ethnicity in America is African American, where the second more common ethnicity in Texas is Hispanic. These differences could be attributed to the difference in the way the percentages are calculated in that the bar chart represents an average of the percentages of each individual county, which could skew the data, while the data collected for the United States is a percentage of the whole population.</p>
+<ol start="5" style="list-style-type: decimal">
+<li>Perform k-means clustering or PCA on your numeric variables.</li>
+</ol>
+<pre class="r"><code>fulldataPCA&lt;-unemploy_cat_data%&gt;%select_if(is.numeric)%&gt;%scale()
+rownames(fulldataPCA)&lt;-unemploy_cat_data$County
+fulldataPCA1&lt;-princomp(fulldataPCA)
+names(fulldataPCA1)</code></pre>
+<pre><code>## [1] &quot;sdev&quot;     &quot;loadings&quot; &quot;center&quot;   &quot;scale&quot;    &quot;n.obs&quot;    &quot;scores&quot;  
+## [7] &quot;call&quot;</code></pre>
+<pre class="r"><code>summary(fulldataPCA1,loadings=T)</code></pre>
+<pre><code>## Importance of components:
+##                           Comp.1    Comp.2    Comp.3    Comp.4     Comp.5
+## Standard deviation     1.8472482 1.3672828 1.1213459 1.0958743 0.93397846
+## Proportion of Variance 0.3425813 0.1876851 0.1262387 0.1205687 0.08757636
+## Cumulative Proportion  0.3425813 0.5302665 0.6565051 0.7770739 0.86465023
+##                            Comp.6     Comp.7     Comp.8     Comp.9
+## Standard deviation     0.75677120 0.60729467 0.51573625 0.37506682
+## Proportion of Variance 0.05749663 0.03702645 0.02670352 0.01412311
+## Cumulative Proportion  0.92214686 0.95917332 0.98587684 0.99999995
+##                             Comp.10
+## Standard deviation     6.988565e-04
+## Proportion of Variance 4.903308e-08
+## Cumulative Proportion  1.000000e+00
+## 
+## Loadings:
+##                                             Comp.1 Comp.2 Comp.3 Comp.4
+## HighSchoolGraduateOrHigher                   0.408  0.322         0.276
+## BachelorDegreeOrHigher                       0.321  0.321 -0.489 -0.102
+## UnemploymentRate                            -0.153 -0.518         0.165
+## Hispanic                                    -0.377 -0.190 -0.310 -0.422
+## WhiteAlone                                  -0.410  0.436              
+## AfricanAmericanAlone                         0.351 -0.485  0.171  0.121
+## IndianNativeAlone                           -0.108  0.171  0.468 -0.473
+## AsianAlone                                   0.292 -0.120 -0.551 -0.316
+## NativeHawaiianand OtherPacificIslanderAlone  0.170 -0.106  0.153 -0.541
+## MultiRacial                                  0.385         0.280 -0.274
+##                                             Comp.5 Comp.6 Comp.7 Comp.8
+## HighSchoolGraduateOrHigher                          0.227  0.294       
+## BachelorDegreeOrHigher                              0.155  0.201  0.576
+## UnemploymentRate                                    0.789  0.209       
+## Hispanic                                                  -0.177  0.432
+## WhiteAlone                                   0.207  0.185        -0.111
+## AfricanAmericanAlone                        -0.118 -0.275         0.305
+## IndianNativeAlone                           -0.569  0.163  0.399       
+## AsianAlone                                  -0.302               -0.598
+## NativeHawaiianand OtherPacificIslanderAlone  0.718         0.331 -0.110
+## MultiRacial                                         0.399 -0.723       
+##                                             Comp.9 Comp.10
+## HighSchoolGraduateOrHigher                   0.710        
+## BachelorDegreeOrHigher                      -0.385        
+## UnemploymentRate                                          
+## Hispanic                                     0.573        
+## WhiteAlone                                          0.738 
+## AfricanAmericanAlone                                0.640 
+## IndianNativeAlone                                         
+## AsianAlone                                          0.199 
+## NativeHawaiianand OtherPacificIslanderAlone               
+## MultiRacial</code></pre>
+<pre class="r"><code>eigval&lt;-fulldataPCA1$sdev^2
+varprop=round(eigval/sum(eigval),2)
+
+ggplot()+geom_bar(aes(y=varprop,x=1:10),stat=&quot;identity&quot;)+xlab(&quot;PC&quot;)+geom_path(aes(y=varprop,x=1:10))+geom_text(aes(x=1:10,y=varprop,label=round(varprop,2)),vjust=1,col=&quot;white&quot;,size=5)+scale_y_continuous(breaks = seq(0,.6,.2),labels=scales::percent)+scale_x_continuous(breaks=1:10)</code></pre>
+<p><img src="/Project1_files/figure-html/PCA-1.png" width="672" /></p>
+<pre class="r"><code>library(ggrepel)
+fulldata_df&lt;-unemploy_cat_data%&gt;%mutate(PC1=fulldataPCA1$scores[,1],PC2=fulldataPCA1$scores[,2],PC3=fulldataPCA1$scores[,3],PC4=fulldataPCA1$scores[,4])
+ggplot(fulldata_df,aes(PC1,PC2,color=unemployrange))+geom_point()+geom_text_repel(aes(label=County),color=&quot;Black&quot;)</code></pre>
+<p><img src="/Project1_files/figure-html/PCA-2.png" width="672" /></p>
+<pre class="r"><code>ggplot(fulldata_df,aes(PC3,PC4,color=unemployrange))+geom_point()+geom_text_repel(aes(label=County),color=&quot;Black&quot;)</code></pre>
+<p><img src="/Project1_files/figure-html/PCA-3.png" width="672" /></p>
+<pre class="r"><code>fulldataPCA1$loadings[2:10,1:2]%&gt;%as.data.frame%&gt;%rownames_to_column %&gt;%ggplot()+geom_hline(aes(yintercept=0),lty=2)+geom_vline(aes(xintercept=0),lty=2)+ylab(&quot;PC2&quot;)+xlab(&quot;PC1&quot;)+geom_segment(aes(x=0,y=0,xend=Comp.1,yend=Comp.2),arrow=arrow(),col=&quot;red&quot;)+geom_label(aes(x=Comp.1*1.1,y=Comp.2*1.1,label=rowname))</code></pre>
+<p><img src="/Project1_files/figure-html/PCA-4.png" width="672" /></p>
+<pre class="r"><code>fulldataPCA1$loadings[2:10,1:2]%&gt;%as.data.frame%&gt;%rownames_to_column %&gt;%ggplot()+geom_hline(aes(yintercept=0),lty=2)+geom_vline(aes(xintercept=0),lty=2)+ylab(&quot;PC4&quot;)+xlab(&quot;PC3&quot;)+geom_segment(aes(x=0,y=0,xend=Comp.1,yend=Comp.2),arrow=arrow(),col=&quot;red&quot;)+geom_label(aes(x=Comp.1*1.1,y=Comp.2*1.1,label=rowname))</code></pre>
+<p><img src="/Project1_files/figure-html/PCA-5.png" width="672" /></p>
+<p>Since the data was already clean, I scaled the data and ran princomp(). I ran summary(), which showed me the standard deviation, proportion of variance, and cumulative proportion of all the PCs. Then, I got the eigenvalues by squaring the standard deviations.</p>
+<p>In making the scree plot, the first four PCs account for 0.78 of the total variance , and the scree plot flattens after the first four PCs, so I chose to retain the first four PCs.</p>
+<p>In interpreting the PCs from the summary() function, the correlations are associated with the values of the PCs. For example, higher scores on PC1 mean a higher proportion of bachelor’s degrees and a lower unemployment rate. On the other hand, a lower PC1 score means a lower proportion of bachelor’s degrees and a higher unemployment rate. Also, higher scores on PC2 reiterates the variances that are explained by PC1 for the most part. This information is repeatd in the data shown in the plot between PC1 and PC2, where unemployment is color coded. PC2 appears to explain variation in unemployment more as a higher PC2 value corresponds with a lower unemployment rate.</p>
+<p>In the plot of loadings comparing PC1 and PC2, a smaller angle between vectors represents a higher correlation. In comparing education &amp; unemployment vs ethnicity, it can be seen that there is a relatively higher orrelation between percent multiracial and percent with a bachelor’s degree or higher. Also, There is a slight correlation between hispanic and unemployment rate.</p>
+<p>The plot of loadings comparing PC3 and PC4 show similar correlations to the plot wth PC1 and PC2. The results from the plot of loadings shows that there is no outstanding correlations between ethnicity and education/unemployment.</p>
+</div>
+</div>

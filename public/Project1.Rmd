@@ -1,0 +1,167 @@
+---
+title: 'Project 1: Exploratory Data Analysis'
+author: "Jarrett Rong"
+date: "9/16/2019"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Wrangling and Data Exploration
+
+### Instructions
+A knitted R Markdown document (as a PDF) and the raw R Markdown file (as .Rmd) should both be submitted to Canvas by 11:59pm on 10/13/2019. These two documents will be graded jointly, so they must be consistent (i.e., don’t change the R Markdown file without also updating the knitted document). Knit an html copy too, for later!
+
+I envision your written text forming something of a narrative structure around your code/output. All results presented must have corresponding code. Any answers/results/plots etc. given without the corresponding R code that generated the result will not be graded. Furthermore, all code contained in your final project document should work properly. Please do not include any extraneous code or code which produces error messages. (Code which produces warnings is acceptable, as long as you understand what the warnings mean).
+
+```{r introduction}
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(tidyverse)
+Education_Unemployment<-read_excel("C:/Users/Jarrett/Desktop/Education_Unemployment.xls.xlsx")
+Ethnicity_Race <- read_excel("C:/Users/Jarrett/Desktop/Ethnicity_Race.xls.xlsx")
+head(Education_Unemployment)
+head(Ethnicity_Race)
+```
+### Introduction
+Data description: The two datasets that I am using are Texas Ethnicity & Race and Texas Education & Unemployment, both based on counties in Texas. I extracted the data from Texas Association of Counties. The Ethnicity and Race dataset shows the percentages of each race and ethnicity, including Hispanic, White, African American, Indian Native, Asian, Native Hawaiian and other Pacific Islander, and Multi Racial that make up each county. The Education & Unemployment dataset shows the percent of highschool graduates or higher, percent of the population with a bachelor degree or higher, and the unemployment rate in each Texas county.
+
+This data is interesting to me because I expect some sort of correlation between race and level of education/unemployment rate because that's what I've been taught throughout my studies and through personal experience. However, I want to go into this project without any biases and let the data tell the story.
+
+
+### Guidelines
+
+1. If the datasets are not tidy, you will need to reshape them so that every observation has its own row and every variable its own column. If the datasets are both already tidy, you will make them untidy with spread() and then tidy them again with gather() to demonstrate your use of the functions.
+
+```{R tidying}
+education_employment_untidy <- Education_Unemployment %>% pivot_longer(c("HighSchoolGraduateOrHigher", "BachelorDegreeOrHigher", "UnemploymentRate"), names_to="name", values_to="value")
+education_employment_tidy <- education_employment_untidy %>% pivot_wider(names_from = "name", values_from = "value")
+ethnicity_race_untidy <- Ethnicity_Race %>% pivot_longer(c("Hispanic", "WhiteAlone"), names_to = "name", values_to = "value")
+ethnicity_race_tidy <- ethnicity_race_untidy %>% pivot_wider(names_from = "name", values_from = "value")
+
+```
+
+Since all the datasets were already tidy, I began by untidying each dataset. Each dataset contained values in percent. Through the process of untidying, I used the function pivotlonger() to essentially swap the columns and rows.
+
+In the two datasets, all the data in the columns were presented in percentages, so I used pivotlonger() to untidy the data and created a new "name" column for for the original column titles and a new "value" column for the original percentages. To tidy the two datasets again, I used pivotwider() to revert the data to its original form.
+
+2. Join your 2+ separate data sources into a single dataset
+    
+```{R join}
+#joining datasets
+fulldata<- Education_Unemployment%>%full_join(Ethnicity_Race, by = "County")
+#making data numeric
+fulldata$HighSchoolGraduateOrHigher <- as.numeric(fulldata$HighSchoolGraduateOrHigher)
+fulldata$BachelorDegreeOrHigher <- as.numeric(fulldata$BachelorDegreeOrHigher)
+fulldata$UnemploymentRate <- as.numeric(fulldata$UnemploymentRate)
+fulldata$Hispanic <- as.numeric(fulldata$Hispanic)
+fulldata$WhiteAlone <- as.numeric(fulldata$WhiteAlone)
+fulldata$AfricanAmericanAlone <- as.numeric(fulldata$AfricanAmericanAlone)
+fulldata$IndianNativeAlone <- as.numeric(fulldata$IndianNativeAlone)
+fulldata$AsianAlone <- as.numeric(fulldata$AsianAlone)
+fulldata$`NativeHawaiianand OtherPacificIslanderAlone` <- as.numeric(fulldata$`NativeHawaiianand OtherPacificIslanderAlone`)
+fulldata$MultiRacial <- as.numeric(fulldata$MultiRacial)
+```
+
+In this case, since both of my datasets have "counties" in common, I decided to use the function full_join(). I chose full join because it retains all of the data, but I could have also used right join or left join because neither of the datasets have any matching columns, so no data would have been lost. 
+
+Also, in order to guarantee that all the values in my dataset are registered as numberic, I used the as.numeric() function.
+
+3. Create summary statistics
+
+``` {R Summary}
+#new variable with mutate
+
+fulldata %>% mutate(County_Unemploy_vs_Texas_Unemploy = UnemploymentRate/ mean(UnemploymentRate))%>%select(County, County_Unemploy_vs_Texas_Unemploy) %>% glimpse()
+
+#creating categories
+
+quantile(as.numeric(fulldata$UnemploymentRate), probs = c(0,1/3,2/3,1))
+quantile(as.numeric(fulldata$BachelorDegreeOrHigher), probs = c(0,1/3,2/3,1))
+unemploy_cat_data <- fulldata %>% mutate(unemployrange = cut(UnemploymentRate, breaks = c(-Inf,3.7,4.7,Inf), labels = c("Low", "Medium", "High"))) %>% mutate(bachelorrange=cut(BachelorDegreeOrHigher, breaks = c(-Inf, 14.7,18.8,Inf),labels=c("Low","Medium","High")))
+
+#1 Hispanic Alone by unemployment 
+unemploy_cat_data%>%select(c(unemployrange,Hispanic))%>%group_by(unemployrange)%>%summarize(mean_hispanic=mean(Hispanic))
+
+#2 White Alone by unemployment 
+unemploy_cat_data%>%select(c(unemployrange,WhiteAlone))%>%group_by(unemployrange)%>%summarize(mean_White=mean(WhiteAlone))
+
+#3 African American Alone by unemployment
+unemploy_cat_data%>%select(c(unemployrange,AfricanAmericanAlone))%>%group_by(unemployrange)%>%summarize(mean_AfricanAmerican=mean(AfricanAmericanAlone))
+
+#4 Indian Native Alone by unemployment
+unemploy_cat_data%>%select(c(unemployrange,IndianNativeAlone))%>%group_by(unemployrange)%>%summarize(mean_IndianNative=mean(IndianNativeAlone))
+
+#5 Asian Alone by unemployment 
+unemploy_cat_data%>%select(c(unemployrange,AsianAlone))%>%group_by(unemployrange)%>%summarize(mean_Asian=mean(AsianAlone))
+
+#6 MultiRacial by unemployment
+unemploy_cat_data%>%select(c(unemployrange,MultiRacial))%>%group_by(unemployrange)%>%summarize(mean_MultiRacial=mean(MultiRacial))
+
+#7 White Alone by Bachelor Degree or Higher
+unemploy_cat_data%>%select(c(bachelorrange,WhiteAlone))%>%group_by(bachelorrange)%>%summarize(mean_White=mean(WhiteAlone))
+
+#8 Hispanic Alone by Bachelor Degree or Higher
+unemploy_cat_data%>%select(c(bachelorrange,Hispanic))%>%group_by(bachelorrange)%>%summarize(mean_Hispanic=mean(Hispanic))
+
+#9 African American Alone by Bachelor Degree or Higher
+unemploy_cat_data%>%select(c(bachelorrange,AfricanAmericanAlone))%>%group_by(bachelorrange)%>%summarize(mean_AfricanAmerican=mean(AfricanAmericanAlone))
+
+#10 Asian Alone by Bachelor Degree or Higher
+unemploy_cat_data%>%select(c(bachelorrange,AsianAlone))%>%group_by(bachelorrange)%>%summarize(mean_Asian=mean(AsianAlone))
+
+#filtering high unemployment
+unemploy_cat_data%>%filter(unemployrange == "High")%>%group_by(bachelorrange)%>%summarize(mean_WhiteAlone = mean(WhiteAlone))
+```
+I first used mutate to create a variable called County_Unemploy_vs_Texas_Unemploy, which is a function of the unemployment in each county divided by the mean employment of all the counties in Texas. I then created a new dataset calle unemploy_cat_data, which included the variables "unemployrange" and "bachelorrange", which contain categorical data for unemployment and bachelor degrees respectively. The categorical variables are "Low", "Medium", and "High", which represent the bottom 1/3, middle, and top 1/3 of the population. I then compared ethnicities to the categorical unemployment. The Hispanic population showed a trend in where counties with a higher percent population of hispanics also had a higher unemployment rate. The white population showed a trend where a higher percent population of white individuals tended to have lower unemployment. The African American population showed a trend where a higher percent population of African Americans correlated with higher unemployment. The Indian Native population showed a trend where a higher percent population of Indian Natives correlated with high unemployment. The Asian population showed a trend in where a higher percent population of Asians correlated with lower unemployment. The multiracial population showed a trend where a higher percent mixed population correlated with lower unemployment, although this difference was not as apparent as the others. I also compared various ethnicities to whether or not they received a bachelor's degree. Overall not a strong trend was observed in the white population, with 89.28% white ethnicity alone living in counties with low rates of bachelor degrees and 88.74% living in counties with high rates of bachelor degrees. In the Hispanic population, the difference is more evident in that there is 44.64% with "low" levels of bachelors degrees, and 28.43 with "high" levels of bachelors degrees. In African American populations, there is not a significant gap as 7.03% are in counties with "low" levels of bachelor's degrees and 6.08% with high levels of bachelor's degrees. In the Asian population there is not much of a difference between "low" and "medium". However, 2.11% of Asians are in areas with "high" bachelor's degrees and only 0.88% are in areas with "low" bachelor's degrees.
+
+In the filtering, of those with high unemployment, it was seen that there is a higher percentage of the white population categorized as "low" in receiving a bachelor degree compared to "high." This makes sense because a high unemployment and low levels of bachelor's degrees are likely correlated, and in this case, we filtered for only high unemployment.
+
+
+4. Make visualizations
+
+```{R Visualization}
+ggplot(fulldata,aes(x=WhiteAlone))+geom_point(aes(y=UnemploymentRate, size=(fulldata$BachelorDegreeOrHigher)), shape=21,color="black",fill="purple")+scale_size_continuous(name="Bachelor Degree or Higher (%)")+ggtitle("Percent of White Population Unemployed in Texas Conties")+xlab("County's Percentage of White Individuals (%)")+ylab("County's Percentage of Population Unemployed (%)")+scale_x_continuous(breaks = seq(0,100,5), labels = seq(0,100,5))
+
+fulldatalonger<-fulldata%>%pivot_longer(c("Hispanic", "WhiteAlone", "AfricanAmericanAlone", "IndianNativeAlone","AsianAlone","NativeHawaiianand OtherPacificIslanderAlone", "MultiRacial"), names_to = "Ethnicity", values_to = "Percentage")
+ggplot(fulldatalonger, aes(x= Ethnicity))+geom_bar(aes(y=Percentage), stat="summary",fun.y="mean",fill=c("blue","green","red","yellow","purple","pink","orange"))+theme(axis.text.x = element_text(angle=45,hjust=1,size=10))+ggtitle("Texas County Race and Ethnicity Summary")+ylab("Percent of Population(%)")+xlab("Ethnicity")
+```
+
+The first scatterplot titled "Percent of White Population Unemployed in Texas Counties" shows a slight trend where counties with higher percentages of white individuals have a lower percent of unemployed individuals. In addition, the size of the point on the plot relate to to percent of populatino with a bachelor's degree or higher, with the larger points representing a greater percentage of individuals with a bachelor's degree in a Texas county. From the scatterplot, there seems to be a trend where counties that have a higher percentage of the population that have a bachelor's degree or higher have a lower percentage of the population unemployed. This is likely due to the fact that higher educated individuals are more likely to get employed.
+
+In the bar chart titled "Texas County Race and Ethnicity," it is evident that white individuals make up the majority of the population in Texas, with a percentage more than double the second highest ethnicity, Hispanics. In comparing the race and ethnicity of Texas to the rest of America, there are some differences as well with white individuals making up oer 80% of the population in Texas, while 73% of white indiviudals make up the population of America. Also, the second most common ethnicity in America is African American, where the second more common ethnicity in Texas is Hispanic. These differences could be attributed to the difference in the way the percentages are calculated in that the bar chart represents an average of the percentages of each individual county, which could skew the data, while the data collected for the United States is a percentage of the whole population.
+
+5. Perform k-means clustering or PCA on your numeric variables.
+
+```{R PCA}
+fulldataPCA<-unemploy_cat_data%>%select_if(is.numeric)%>%scale()
+rownames(fulldataPCA)<-unemploy_cat_data$County
+fulldataPCA1<-princomp(fulldataPCA)
+names(fulldataPCA1)
+summary(fulldataPCA1,loadings=T)
+eigval<-fulldataPCA1$sdev^2
+varprop=round(eigval/sum(eigval),2)
+
+ggplot()+geom_bar(aes(y=varprop,x=1:10),stat="identity")+xlab("PC")+geom_path(aes(y=varprop,x=1:10))+geom_text(aes(x=1:10,y=varprop,label=round(varprop,2)),vjust=1,col="white",size=5)+scale_y_continuous(breaks = seq(0,.6,.2),labels=scales::percent)+scale_x_continuous(breaks=1:10)
+
+library(ggrepel)
+fulldata_df<-unemploy_cat_data%>%mutate(PC1=fulldataPCA1$scores[,1],PC2=fulldataPCA1$scores[,2],PC3=fulldataPCA1$scores[,3],PC4=fulldataPCA1$scores[,4])
+ggplot(fulldata_df,aes(PC1,PC2,color=unemployrange))+geom_point()+geom_text_repel(aes(label=County),color="Black")
+ggplot(fulldata_df,aes(PC3,PC4,color=unemployrange))+geom_point()+geom_text_repel(aes(label=County),color="Black")
+
+fulldataPCA1$loadings[2:10,1:2]%>%as.data.frame%>%rownames_to_column %>%ggplot()+geom_hline(aes(yintercept=0),lty=2)+geom_vline(aes(xintercept=0),lty=2)+ylab("PC2")+xlab("PC1")+geom_segment(aes(x=0,y=0,xend=Comp.1,yend=Comp.2),arrow=arrow(),col="red")+geom_label(aes(x=Comp.1*1.1,y=Comp.2*1.1,label=rowname))
+fulldataPCA1$loadings[2:10,1:2]%>%as.data.frame%>%rownames_to_column %>%ggplot()+geom_hline(aes(yintercept=0),lty=2)+geom_vline(aes(xintercept=0),lty=2)+ylab("PC4")+xlab("PC3")+geom_segment(aes(x=0,y=0,xend=Comp.1,yend=Comp.2),arrow=arrow(),col="red")+geom_label(aes(x=Comp.1*1.1,y=Comp.2*1.1,label=rowname))
+```
+
+Since the data was already clean, I scaled the data and ran princomp(). I ran summary(), which showed me the standard deviation, proportion of variance, and cumulative proportion of all the PCs. Then, I got the eigenvalues by squaring the standard deviations. 
+
+In making the scree plot, the first four PCs account for 0.78 of the total variance , and the scree plot flattens after the first four PCs, so I chose to retain the first four PCs.
+
+In interpreting the PCs from the summary() function, the correlations are associated with the values of the PCs. For example, higher scores on PC1 mean a higher proportion of bachelor's degrees and a lower unemployment rate. On the other hand, a lower PC1 score means a lower proportion of bachelor's degrees and a higher unemployment rate. Also, higher scores on PC2 reiterates the variances that are explained by PC1 for the most part. This information is repeatd in the data shown in the plot between PC1 and PC2, where unemployment is color coded. PC2 appears to explain variation in unemployment more as a higher PC2 value corresponds with a lower unemployment rate.
+
+In the plot of loadings comparing PC1 and PC2, a smaller angle between vectors represents a higher correlation. In comparing education & unemployment vs ethnicity, it can be seen that there is a relatively higher orrelation between percent multiracial and percent with a bachelor's degree or higher. Also, There is a slight correlation between hispanic and unemployment rate. 
+
+The plot of loadings comparing PC3 and PC4 show similar correlations to the plot wth PC1 and PC2. The results from the plot of loadings shows that there is no outstanding correlations between ethnicity and education/unemployment.

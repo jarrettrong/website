@@ -1,0 +1,98 @@
+---
+title: "Classtime"
+output: html_document
+date: "2019-12-15"
+slug: Classtime
+---
+```{R}
+install.packages("reticulate")
+install.packages("contrib.url")
+install.packages("shiny")
+install.packages("miniUI")
+library(shiny)
+library(miniUI)
+library(reticulate)
+library(contrib.url)
+np <- import("numpy")
+```
+
+# Python
+
+* Being able to relate content within this course to my major was an insightful experience. 
+
+```{python}
+### Finding 3-mers
+my_seq1 = "ATCATCATG"
+my_seq2 = "CAGCCCAATCAGGCTCTACTGCCACTAAACTTACGCAGGATATATTTACGCCGACGTACT"
+
+def find_3mer(seq):
+    out_dict = {}
+    for i in range(len(seq) - 2):
+        if seq[i:i+3] in out_dict:
+            out_dict[seq[i:i+3]] += 1
+        else:
+            out_dict[seq[i:i+3]] = 1
+    return out_dict
+
+print(find_3mer(my_seq1))
+print(find_3mer(my_seq2))
+```
+
+
+#alignment
+![alignment matrix with arrows](/blog/2019-12-15-Classtime-files/alignment.png){width=232px height=260px}
+
+```{python}
+### alignments
+import numpy as np
+
+def match_fun(a,b):  # Helper function to define match/mismatch scores
+    if a==b:
+        score=2 #match score
+    else:
+        score=-1 #mismatch score
+    return score
+
+def needleman(seq1,seq2,gap_penalty=-1):       # Needleman-Wunsch algorithm in a function
+    m=len(seq1) #length of horizontal sequence
+    n=len(seq2) #length of vertical sequence
+    score=np.empty(shape=[n+1,m+1]) #array to hold scores
+    for j in range(0, m + 1): score[0][j] = gap_penalty * j
+    for i in range(0, n + 1): score[i][0] = gap_penalty * i
+    for i in range(1, n + 1): 
+        for j in range(1, m + 1):
+            insert = score[i - 1][j] + gap_penalty 
+            delete = score[i][j - 1] + gap_penalty 
+            match = score[i - 1][j - 1] + match_fun(seq1[j-1], seq2[i-1])
+            score[i][j] = max(match, delete, insert)
+    return score
+
+x1="CCAGT"
+x2="ACAAGT"
+
+mat=needleman(x2,x1)
+
+
+def get_alignment(seq1,seq2,mat,gap_penalty=-1):
+    j=len(seq1) #length of horizontal sequence
+    i=len(seq2) #length of vertical sequence
+    AlignA=""   #empty strings to hold alignments
+    AlignB=""
+    while i > 0 or j > 0:  #start at the bottom right corner: if from diagonal, align sequences
+        if i > 0 and j > 0 and mat[i,j]==mat[i-1][j-1]+match_fun(seq1[j-1],seq2[i-1]):
+            AlignA = seq1[j-1] + AlignA
+            AlignB = seq2[i-1] + AlignB
+            i -= 1
+            j -= 1
+        elif j > 0 and mat[i,j]==mat[i][j-1]+gap_penalty: #if from above, put gap in vertical sequence
+            AlignA = seq1[j-1] + AlignA
+            AlignB = "-" + AlignB
+            j -= 1
+        else:                             #if from the left, put gap in horizontal sequence
+            AlignA = "-" + AlignA
+            AlignB = seq2[i-1]+AlignB
+            i -= 1
+    return AlignA, AlignB #return both alignments
+
+get_alignment(x2,x1,mat)
+```

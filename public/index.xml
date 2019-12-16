@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Jarrett Rong</title>
+    <link>/</link>
+    <description>Recent content on Jarrett Rong</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Sun, 15 Dec 2019 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Resume</title>
+      <link>/resume/</link>
+      <pubDate>Sun, 15 Dec 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/resume/</guid>
+      <description>```
+Jarrett RongEmail: jrong97@gmail.comEducation: BSA Biology, The University of Texas at AustinAbout: Pre-medical student at UT Austin pursuing a major in biology and minor in entrepreneurship. In my free time, I enjoy hiking and cooking.Skills: Molecular biology lab techniques, basic coding in R, public speaking, new venture mechanics.Work Experiences
+Freshman Research Initiative at UT AustinFunctional Genomics lab from 2017-2019St.</description>
+    </item>
+    
+    <item>
+      <title>Projects</title>
+      <link>/projects/</link>
+      <pubDate>Sun, 02 Oct 2016 22:55:05 -0400</pubDate>
+      
+      <guid>/projects/</guid>
+      <description>Projects Here are the projects I have been working on:
+-Project 1: Data Wrangling and Exploratory Analysis
+-Project 2: Modeling</description>
+    </item>
+    
+    <item>
+      <title>Project 1: Exploratory Data Analysis</title>
+      <link>/project1/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project1/</guid>
+      <description>Data Wrangling and Data ExplorationInstructionsA knitted R Markdown document (as a PDF) and the raw R Markdown file (as .Rmd) should both be submitted to Canvas by 11:59pm on 10/13/2019. These two documents will be graded jointly, so they must be consistent (i.e., don’t change the R Markdown file without also updating the knitted document). Knit an html copy too, for later!
+I envision your written text forming something of a narrative structure around your code/output.</description>
+    </item>
+    
+    <item>
+      <title>Project 2: Modeling, Testing, and Predicting</title>
+      <link>/project2/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>/project2/</guid>
+      <description>ModelingGuidelines and Rubric0. (5 pts) Introduce your dataset and each of your variables (or just your main variables if you have lots) in a paragraph.library(readxl)library(ggplot2)library(dplyr)library(tidyr)library(tidyverse)Education_Unemployment &amp;lt;- read_excel(&amp;quot;C:/Users/Jarrett/Desktop/16th Semester 1/Comp Bio/Education_Unemployment.xls.xlsx&amp;quot;)Ethnicity_Race &amp;lt;- read_excel(&amp;quot;C:/Users/Jarrett/Desktop/16th Semester 1/Comp Bio/Ethnicity_Race.xls.xlsx&amp;quot;)fulldata&amp;lt;- Education_Unemployment%&amp;gt;%full_join(Ethnicity_Race, by = &amp;quot;County&amp;quot;)#Making data numericfulldata$HighSchoolGraduateOrHigher &amp;lt;- as.numeric(fulldata$HighSchoolGraduateOrHigher)fulldata$BachelorDegreeOrHigher &amp;lt;- as.numeric(fulldata$BachelorDegreeOrHigher)fulldata$UnemploymentRate &amp;lt;- as.numeric(fulldata$UnemploymentRate)fulldata$Hispanic &amp;lt;- as.numeric(fulldata$Hispanic)fulldata$WhiteAlone &amp;lt;- as.numeric(fulldata$WhiteAlone)fulldata$AfricanAmericanAlone &amp;lt;- as.</description>
+    </item>
+    
+  </channel>
+</rss>
